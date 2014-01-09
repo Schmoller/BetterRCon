@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 
 public class RConThread extends Thread
@@ -26,6 +27,7 @@ public class RConThread extends Thread
 			mSocket = new ServerSocket();
 			mSocket.bind(new InetSocketAddress(mPort));
 			mSocket.setSoTimeout(30);
+			System.out.println("Better RCon listening on port " + mPort);
 		}
 		catch(IOException e)
 		{
@@ -41,13 +43,21 @@ public class RConThread extends Thread
 				try
 				{
 					Socket socket = mSocket.accept();
-					RconConnectionThread conObj = new RconConnectionThread(new RconConnection(socket), this);
+					System.out.println("RCON connection from " + socket.getInetAddress());
+					RconConnection con = new RconConnection(socket);
+					RconConnectionThread conObj = new RconConnectionThread(con, this);
+					con.setThread(conObj);
+					
 					synchronized(mConnections)
 					{
 						mConnections.add(conObj);
 					}
 					
 					conObj.start();
+				}
+				catch(SocketException e)
+				{
+					break;
 				}
 				catch(IOException e)
 				{
@@ -56,23 +66,40 @@ public class RConThread extends Thread
 		}
 		finally
 		{
-			synchronized(mConnections)
+			if(!mSocket.isClosed())
 			{
-				for(RconConnectionThread thread : mConnections)
-					thread.terminate();
-				mConnections.clear();
-			}
-			
-			try
-			{
-				mSocket.close();
-			}
-			catch(IOException e) {}
-			finally
-			{
-				mSocket = null;
+				synchronized(mConnections)
+				{
+					for(RconConnectionThread thread : mConnections)
+						thread.terminate();
+					mConnections.clear();
+				}
+				
+				try
+				{
+					mSocket.close();
+				}
+				catch(IOException e) 
+				{
+				}
 			}
 		}
+	}
+	
+	public void terminate()
+	{
+		synchronized(mConnections)
+		{
+			for(RconConnectionThread thread : mConnections)
+				thread.terminate();
+			mConnections.clear();
+		}
+		
+		try
+		{
+			mSocket.close();
+		}
+		catch(IOException e) {}
 	}
 	
 	public void remove(RconConnectionThread thread)

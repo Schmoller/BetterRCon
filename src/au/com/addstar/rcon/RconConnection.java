@@ -1,6 +1,5 @@
 package au.com.addstar.rcon;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Set;
@@ -22,6 +21,7 @@ import au.com.addstar.rcon.packets.RConPacket;
 public class RconConnection implements RemoteConsoleCommandSender
 {
 	private Socket mSocket;
+	private RconConnectionThread mThread;
 	private PermissibleBase perm = new PermissibleBase(this);
 	
 	public RconConnection(Socket socket)
@@ -34,18 +34,18 @@ public class RconConnection implements RemoteConsoleCommandSender
 		return mSocket;
 	}
 	
+	public RconConnectionThread getThread()
+	{
+		return mThread;
+	}
+	public void setThread(RconConnectionThread thread)
+	{
+		mThread = thread;
+	}
+	
 	public void send(RConPacket packet)
 	{
-		try
-		{
-			DataOutputStream output = new DataOutputStream(mSocket.getOutputStream());
-			packet.write(output);
-			mSocket.getOutputStream().flush();
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
-		}
+		BetterRCon.sendPacket(packet, this);
 	}
 	
 	@Override
@@ -158,6 +158,8 @@ public class RconConnection implements RemoteConsoleCommandSender
 			mSocket.close();
 		}
 		catch(IOException e) {}
+		
+		perm.clearPermissions();
 	}
 	
 	public void handle(RConPacket packet)

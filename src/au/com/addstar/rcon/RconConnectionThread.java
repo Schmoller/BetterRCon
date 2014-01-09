@@ -49,5 +49,6 @@ public class RconConnectionThread extends Thread
 	{
 		mCon.close();
 		interrupt();
+		mParent.remove(this);
 	}
 }

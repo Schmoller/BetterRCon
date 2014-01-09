@@ -7,9 +7,16 @@ import java.io.IOException;
 public abstract class RConPacket
 {
 	@SuppressWarnings( "unchecked" )
-	private static Class<? super RConPacket>[] packets = new Class[256];
+	private static Class<? extends RConPacket>[] packets = new Class[256];
 	
-	public static void setPacket(int id, Class<? super RConPacket> packetClass) throws IllegalArgumentException
+	static
+	{
+		setPacket(1, PacketLogin.class);
+		setPacket(20, PacketCommand.class);
+		setPacket(30, PacketMessage.class);
+	}
+	
+	public static void setPacket(int id, Class<? extends RConPacket> packetClass) throws IllegalArgumentException
 	{
 		packets[id] = packetClass;
 		try
@@ -39,13 +46,13 @@ public abstract class RConPacket
 	{
 		int id = input.readUnsignedByte();
 		
-		Class<? super RConPacket> packetClass = packets[id];
+		Class<? extends RConPacket> packetClass = packets[id];
 		if(packetClass == null)
 			throw new IOException("Bad packet id " + id);
 		
 		try
 		{
-			RConPacket packet = (RConPacket) packetClass.newInstance();
+			RConPacket packet = packetClass.newInstance();
 			packet.read(input);
 			
 			return packet;
