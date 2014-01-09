@@ -1,0 +1,10 @@
+name: BetterRCon
+version: 1.0
+author: Schmoller
+
+description: Provides a better RCon experience when combined with <insert program name here>
+
+main: au.com.addstar.rcon.BetterRCon
+
+
+
