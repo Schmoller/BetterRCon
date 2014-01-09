@@ -18,4 +18,9 @@ public class BetterRCon extends JavaPlugin
 	{
 		mThread.interrupt();
 	}
+	
+	public static boolean isValid(String username, long passwordHash)
+	{
+		return true;
+	}
 }

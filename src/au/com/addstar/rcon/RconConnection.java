@@ -1,21 +1,28 @@
 package au.com.addstar.rcon;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Set;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.command.RemoteConsoleCommandSender;
+import org.bukkit.permissions.PermissibleBase;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 
+import au.com.addstar.rcon.packets.PacketCommand;
+import au.com.addstar.rcon.packets.PacketLogin;
+import au.com.addstar.rcon.packets.PacketMessage;
 import au.com.addstar.rcon.packets.RConPacket;
 
 public class RconConnection implements RemoteConsoleCommandSender
 {
 	private Socket mSocket;
+	private PermissibleBase perm = new PermissibleBase(this);
 	
 	public RconConnection(Socket socket)
 	{
@@ -27,102 +34,121 @@ public class RconConnection implements RemoteConsoleCommandSender
 		return mSocket;
 	}
 	
+	public void send(RConPacket packet)
+	{
+		try
+		{
+			DataOutputStream output = new DataOutputStream(mSocket.getOutputStream());
+			packet.write(output);
+			mSocket.getOutputStream().flush();
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
 	@Override
 	public String getName()
 	{
-		return null;
+		return "RCon";
 	}
 
 	@Override
 	public Server getServer()
 	{
-		return null;
+		return Bukkit.getServer();
 	}
 
 	@Override
 	public void sendMessage( String message )
 	{
-		
+		send(new PacketMessage(message));
 	}
 
 	@Override
 	public void sendMessage( String[] messages )
 	{
+		for(String message : messages)
+			send(new PacketMessage(message));
 	}
 
 	@Override
 	public PermissionAttachment addAttachment( Plugin plugin )
 	{
-		return null;
+		return perm.addAttachment(plugin);
 	}
 
 	@Override
-	public PermissionAttachment addAttachment( Plugin plugin, int arg1 )
+	public PermissionAttachment addAttachment( Plugin plugin, int ticks )
 	{
-		return null;
+		return perm.addAttachment(plugin, ticks);
 	}
 
 	@Override
-	public PermissionAttachment addAttachment( Plugin plugin, String arg1, boolean arg2 )
+	public PermissionAttachment addAttachment( Plugin plugin, String name, boolean value )
 	{
-		return null;
+		return perm.addAttachment(plugin, name, value);
 	}
 
 	@Override
-	public PermissionAttachment addAttachment( Plugin plugin, String arg1, boolean arg2, int arg3 )
+	public PermissionAttachment addAttachment( Plugin plugin, String name, boolean value, int ticks )
 	{
-		return null;
+		return perm.addAttachment(plugin, name, value, ticks);
 	}
 
 	@Override
 	public Set<PermissionAttachmentInfo> getEffectivePermissions()
 	{
-		return null;
+		return perm.getEffectivePermissions();
 	}
 
 	@Override
 	public boolean hasPermission( String permission )
 	{
-		return true;
+		return perm.hasPermission(permission);
 	}
 
 	@Override
 	public boolean hasPermission( Permission permission )
 	{
-		return true;
+		return perm.hasPermission(permission);
 	}
 
 	@Override
 	public boolean isPermissionSet( String permission )
 	{
-		return false;
+		return perm.isPermissionSet(permission);
 	}
 
 	@Override
 	public boolean isPermissionSet( Permission permission )
 	{
-		return false;
+		return perm.isPermissionSet(permission);
 	}
 
 	@Override
 	public void recalculatePermissions()
 	{
+		perm.recalculatePermissions();
 	}
 
 	@Override
 	public void removeAttachment( PermissionAttachment attachment )
 	{
+		perm.removeAttachment(attachment);
 	}
 
 	@Override
 	public boolean isOp()
 	{
-		return false;
+		return true;
 	}
 
 	@Override
 	public void setOp( boolean op )
 	{
+		throw new UnsupportedOperationException("Cannot change operator status of remote console");
 	}
 	
 	public void close()
@@ -136,6 +162,28 @@ public class RconConnection implements RemoteConsoleCommandSender
 	
 	public void handle(RConPacket packet)
 	{
+		if(packet instanceof PacketLogin)
+			handleLogin((PacketLogin)packet);
+		else if(packet instanceof PacketCommand)
+			handleCommand((PacketCommand)packet);
 		
+	}
+	
+	private void handleLogin(PacketLogin packet)
+	{
+		if(BetterRCon.isValid(packet.username, packet.passwordHash))
+		{
+			send(new PacketLogin(packet.username, 0));
+		}
+		else
+		{
+			send(new PacketLogin("", 0));
+			close();
+		}
+	}
+	
+	private void handleCommand(PacketCommand packet)
+	{
+		Bukkit.dispatchCommand(this, packet.command);
 	}
 }
