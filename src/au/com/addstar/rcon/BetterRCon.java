@@ -1,17 +1,18 @@
 package au.com.addstar.rcon;
 
+import java.lang.reflect.Method;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.config.DefaultConfiguration;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.Bukkit;
+import org.bukkit.command.CommandMap;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import au.com.addstar.rcon.packets.RConPacket;
 
-public class BetterRCon extends JavaPlugin implements Listener
+public class BetterRCon extends JavaPlugin
 {
 	private RConThread mThread;
 	private PacketQueue mQueue;
@@ -84,9 +85,23 @@ public class BetterRCon extends JavaPlugin implements Listener
 		return true;
 	}
 	
-	@EventHandler
-	private void onPlayerChat(AsyncPlayerChatEvent event)
+	private static CommandMap mCommandMap = null;
+	
+	public static CommandMap getCommandMap()
 	{
+		if(mCommandMap != null)
+			return mCommandMap;
 		
+		try
+		{
+			Method method = Bukkit.getServer().getClass().getMethod("getCommandMap");
+			mCommandMap = (CommandMap)method.invoke(Bukkit.getServer());
+		}
+		catch(Exception e)
+		{
+			throw new RuntimeException(e);
+		}
+		return mCommandMap;
 	}
+	
 }

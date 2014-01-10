@@ -13,6 +13,9 @@ public abstract class RConPacket
 	{
 		setPacket(1, PacketLogin.class);
 		setPacket(20, PacketCommand.class);
+		setPacket(21, PacketTabCompleteRequest.class);
+		setPacket(22, PacketTabComplete.class);
+		
 		setPacket(30, PacketMessage.class);
 	}
 	

@@ -3,6 +3,7 @@ package au.com.addstar.rcon;
 import java.io.IOException;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.Set;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
@@ -16,6 +17,8 @@ import org.bukkit.plugin.Plugin;
 import au.com.addstar.rcon.packets.PacketCommand;
 import au.com.addstar.rcon.packets.PacketLogin;
 import au.com.addstar.rcon.packets.PacketMessage;
+import au.com.addstar.rcon.packets.PacketTabComplete;
+import au.com.addstar.rcon.packets.PacketTabCompleteRequest;
 import au.com.addstar.rcon.packets.RConPacket;
 
 public class RconConnection implements RemoteConsoleCommandSender
@@ -186,6 +189,8 @@ public class RconConnection implements RemoteConsoleCommandSender
 			handleLogin((PacketLogin)packet);
 		else if(packet instanceof PacketCommand)
 			handleCommand((PacketCommand)packet);
+		else if(packet instanceof PacketTabCompleteRequest)
+			handleTabComplete((PacketTabCompleteRequest)packet);
 		
 	}
 	
@@ -205,5 +210,11 @@ public class RconConnection implements RemoteConsoleCommandSender
 	private void handleCommand(PacketCommand packet)
 	{
 		Bukkit.dispatchCommand(this, packet.command);
+	}
+	
+	private void handleTabComplete(PacketTabCompleteRequest packet)
+	{
+		List<String> results = BetterRCon.getCommandMap().tabComplete(this, packet.request);
+		send(new PacketTabComplete(results));
 	}
 }
