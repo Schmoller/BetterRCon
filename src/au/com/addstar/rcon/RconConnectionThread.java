@@ -15,6 +15,11 @@ public class RconConnectionThread extends Thread
 		mParent = parent;
 	}
 	
+	public RconConnection getRCON()
+	{
+		return mCon;
+	}
+	
 	@Override
 	public void run()
 	{

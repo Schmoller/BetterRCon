@@ -6,6 +6,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class RConThread extends Thread
 {
@@ -17,6 +18,19 @@ public class RConThread extends Thread
 	public RConThread(int port)
 	{
 		mPort = port;
+	}
+	
+	public List<RconConnection> getConnections()
+	{
+		ArrayList<RconConnection> connections = new ArrayList<RconConnection>();
+		
+		synchronized(mConnections)
+		{
+			for(RconConnectionThread connection : mConnections)
+				connections.add(connection.getRCON());
+		}
+		
+		return connections;
 	}
 	
 	@Override

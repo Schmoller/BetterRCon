@@ -2,8 +2,8 @@ package au.com.addstar.rcon;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.Set;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.command.RemoteConsoleCommandSender;
@@ -23,6 +23,10 @@ public class RconConnection implements RemoteConsoleCommandSender
 	private Socket mSocket;
 	private RconConnectionThread mThread;
 	private PermissibleBase perm = new PermissibleBase(this);
+	
+	private String format = "[%d %l]: %m";
+	private SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+	private boolean includeFormat = true;
 	
 	public RconConnection(Socket socket)
 	{
@@ -63,6 +67,20 @@ public class RconConnection implements RemoteConsoleCommandSender
 	@Override
 	public void sendMessage( String message )
 	{
+		if(includeFormat)
+		{
+			String date = dateFormat.format(System.currentTimeMillis());
+			String formatted = format.replaceAll("\\%d", date);
+			formatted = formatted.replaceAll("\\%l", "INFO");
+			formatted = formatted.replaceAll("\\%m", message);
+			message = formatted;
+		}
+				
+		send(new PacketMessage(message));
+	}
+	
+	public void sendRawMessage(String message)
+	{
 		send(new PacketMessage(message));
 	}
 
@@ -70,7 +88,7 @@ public class RconConnection implements RemoteConsoleCommandSender
 	public void sendMessage( String[] messages )
 	{
 		for(String message : messages)
-			send(new PacketMessage(message));
+			sendMessage(message);
 	}
 
 	@Override
