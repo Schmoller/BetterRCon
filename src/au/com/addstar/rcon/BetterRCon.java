@@ -25,7 +25,7 @@ public class BetterRCon extends JavaPlugin
 	public void onEnable()
 	{
 		instance = this;
-		mThread = new RConThread(8000);
+		mThread = new RConThread(8000, this);
 		mThread.start();
 		mQueue = new PacketQueue();
 		mQueue.start();

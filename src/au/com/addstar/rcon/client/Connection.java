@@ -2,16 +2,28 @@ package au.com.addstar.rcon.client;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 import au.com.addstar.rcon.packets.*;
 
@@ -25,14 +37,58 @@ public class Connection extends Thread
 	
 	public Connection(String host, int port, String password) throws IOException
 	{
-		mSocket = new Socket();
-		mSocket.connect(new InetSocketAddress(host, port), 1000);
-		mSocket.setSoTimeout(2000);
-		
-		mPassword = password;
-		
-
-		start();
+		try
+		{
+			KeyStore keyStore = KeyStore.getInstance("JKS");
+			
+			InputStream stream = Connection.class.getResourceAsStream("keystore.jks");
+			if(stream == null) // For testing
+				stream = new FileInputStream("../keystore.jks");
+			
+			keyStore.load(stream, "BetterRCon".toCharArray());
+			
+			stream.close();
+			
+			KeyManagerFactory keyFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+			keyFactory.init(keyStore, "BetterRCon".toCharArray());
+			TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+			factory.init(keyStore);
+			
+			SSLContext context = SSLContext.getInstance("SSL");
+			context.init(keyFactory.getKeyManagers(), factory.getTrustManagers(), null);
+			
+			mSocket = context.getSocketFactory().createSocket();
+			mSocket.connect(new InetSocketAddress(host, port), 1000);
+			mSocket.setSoTimeout(2000);
+			
+			mPassword = password;
+			start();
+		}
+		catch ( KeyStoreException e )
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch ( NoSuchAlgorithmException e )
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch ( CertificateException e )
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch ( KeyManagementException e )
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch ( UnrecoverableKeyException e )
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private void send(RConPacket packet) throws IOException
