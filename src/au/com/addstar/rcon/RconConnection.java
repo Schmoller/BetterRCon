@@ -14,6 +14,7 @@ import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 
+import au.com.addstar.rcon.auth.User;
 import au.com.addstar.rcon.packets.PacketCommand;
 import au.com.addstar.rcon.packets.PacketLogin;
 import au.com.addstar.rcon.packets.PacketMessage;
@@ -36,9 +37,21 @@ public class RconConnection implements RemoteConsoleCommandSender
 	
 	private boolean mHasLoggedIn = false;
 	
+	private User mUser;
+	
 	public RconConnection(Socket socket)
 	{
 		mSocket = socket;
+	}
+	
+	public void setUser(User user)
+	{
+		mUser = user;
+	}
+	
+	public User getUser()
+	{
+		return mUser;
 	}
 	
 	public Socket getSocket()
@@ -179,13 +192,16 @@ public class RconConnection implements RemoteConsoleCommandSender
 	@Override
 	public boolean isOp()
 	{
-		return true;
+		return mUser == null ? true : mUser.isOp();
 	}
 
 	@Override
 	public void setOp( boolean op )
 	{
-		throw new UnsupportedOperationException("Cannot change operator status of remote console");
+		if(mUser == null)
+			throw new UnsupportedOperationException("Cannot change operator status of " + getName());
+		
+		mUser.setOp(op);
 	}
 	
 	public void close()
@@ -214,7 +230,7 @@ public class RconConnection implements RemoteConsoleCommandSender
 	
 	private void handleLogin(PacketLogin packet)
 	{
-		if(BetterRCon.isValid(packet.username, packet.passwordHash))
+		if(BetterRCon.isValid(packet.username, packet.password))
 		{
 			mUsername = packet.username;
 			mNoFormat = packet.noFormat;
@@ -224,11 +240,14 @@ public class RconConnection implements RemoteConsoleCommandSender
 				BetterRCon.getLog().info(String.format("%s logged in from %s", mUsername, mSocket.getInetAddress()));
 			
 			mHasLoggedIn = true;
-			send(new PacketLogin(packet.username, 0, false, false));
+			
+			BetterRCon.getAuth().loadPermissions(this);
+			
+			send(new PacketLogin(packet.username, "OK", false, false));
 		}
 		else
 		{
-			send(new PacketLogin("", 0, false, false));
+			send(new PacketLogin("", "FAIL", false, false));
 			close();
 		}
 	}

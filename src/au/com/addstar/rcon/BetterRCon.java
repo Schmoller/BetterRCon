@@ -1,5 +1,7 @@
 package au.com.addstar.rcon;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 
@@ -10,8 +12,10 @@ import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.config.DefaultConfiguration;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import au.com.addstar.rcon.auth.AuthManager;
 import au.com.addstar.rcon.packets.RConPacket;
 
 public class BetterRCon extends JavaPlugin
@@ -22,17 +26,77 @@ public class BetterRCon extends JavaPlugin
 	private static BetterRCon instance;
 	
 	private RConsoleAppender mAppender;
+	private AuthManager mAuth;
 	
 	@Override
 	public void onEnable()
 	{
 		instance = this;
+		
+		getDataFolder().mkdirs();
+		
+		if(!loadAuth())
+		{
+			die();
+			return;
+		}
+		
+		if(!loadConnectionThread())
+		{
+			die();
+			return;
+		}
+		
+		if(!loadLogAppender())
+		{
+			die();
+			return;
+		}
+	}
+	
+	private void die()
+	{
+		setEnabled(false);
+		instance = null;
+	}
+	
+	private boolean loadAuth()
+	{
+		File authFile = new File(getDataFolder(), "auth.yml");
+		
+		if(!authFile.exists())
+			saveResource("auth.yml", false);
+		
+		mAuth = new AuthManager(new File(getDataFolder(), "auth.yml"), this);
+		try
+		{
+			mAuth.read();
+			return true;
+		}
+		catch(InvalidConfigurationException e)
+		{
+			getLogger().severe("Bad value in auth.yml: " + e.getMessage());
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+		
+		return false;
+	}
+	
+	private boolean loadConnectionThread()
+	{
 		mThread = new RConThread(8000, this);
 		mThread.start();
 		mQueue = new PacketQueue();
 		mQueue.start();
 		
-		// Install custom RConsole appender
+		return true;
+	}
+	
+	private boolean loadLogAppender()
+	{
 		Logger log = (Logger)LogManager.getRootLogger();
 		for(Appender appender : log.getAppenders().values())
 		{
@@ -43,31 +107,42 @@ public class BetterRCon extends JavaPlugin
 		mAppender = new RConsoleAppender(new DefaultConfiguration());
 		mAppender.start();
 		log.addAppender(mAppender);
+		
+		return true;
 	}
 	
 	@Override
 	public void onDisable()
 	{
-		Logger log = (Logger)LogManager.getRootLogger();
-		log.removeAppender(mAppender);
-		mAppender = null;
-		
-		mQueue.interrupt();
-		try
+		if(mAppender != null)
 		{
-			mQueue.join();
-		}
-		catch ( InterruptedException e )
-		{
+			Logger log = (Logger)LogManager.getRootLogger();
+			log.removeAppender(mAppender);
+			mAppender = null;
 		}
 		
-		mThread.terminate();
-		try
+		if(mQueue != null)
 		{
-			mThread.join();
+			mQueue.interrupt();
+			try
+			{
+				mQueue.join();
+			}
+			catch ( InterruptedException e )
+			{
+			}
 		}
-		catch(InterruptedException e)
+		
+		if(mThread != null)
 		{
+			mThread.terminate();
+			try
+			{
+				mThread.join();
+			}
+			catch(InterruptedException e)
+			{
+			}
 		}
 	}
 	
@@ -82,7 +157,7 @@ public class BetterRCon extends JavaPlugin
 			connection.sendRawMessage(message);
 	}
 	
-	public static boolean isValid(String username, long passwordHash)
+	public static boolean isValid(String username, String password)
 	{
 		return true;
 	}
@@ -129,6 +204,11 @@ public class BetterRCon extends JavaPlugin
 	public static java.util.logging.Logger getLog()
 	{
 		return instance.getLogger();
+	}
+	
+	public static AuthManager getAuth()
+	{
+		return instance.mAuth;
 	}
 	
 }

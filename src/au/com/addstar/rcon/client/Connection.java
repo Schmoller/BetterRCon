@@ -112,7 +112,7 @@ public class Connection extends Thread
 	{
 		try
 		{
-			PacketLogin loginPacket = new PacketLogin(username, password.hashCode(), silent, noFormat);
+			PacketLogin loginPacket = new PacketLogin(username, password, silent, noFormat);
 			send(loginPacket);
 			
 			Future<PacketLogin> result = waitForPacket(PacketLogin.class);
