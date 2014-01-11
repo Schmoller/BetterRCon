@@ -1,6 +1,7 @@
 package au.com.addstar.rcon;
 
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 
 import au.com.addstar.rcon.packets.RConPacket;
@@ -38,10 +39,13 @@ public class RconConnectionThread extends Thread
 			}
 			
 		}
+		catch(EOFException e)
+		{
+			// Connection term. Silent shutdown
+		}
 		catch(IOException e)
 		{
-			System.err.println("Error in connection " + mCon.getSocket().getInetAddress());
-			e.printStackTrace();
+			System.err.println("Error in connection " + mCon.getSocket().getInetAddress() + ": " + e.getMessage());
 		}
 		finally
 		{

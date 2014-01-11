@@ -69,6 +69,7 @@ public abstract class RConPacket
 			e.printStackTrace();
 		}
 		
+		// NOTE: This cannot happen as instantiation is checked upon registering the packet class 
 		return null;
 	}
 	

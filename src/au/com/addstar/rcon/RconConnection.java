@@ -52,7 +52,8 @@ public class RconConnection implements RemoteConsoleCommandSender
 	
 	public void send(RConPacket packet)
 	{
-		BetterRCon.sendPacket(packet, this);
+		if(!mSocket.isClosed())
+			BetterRCon.sendPacket(packet, this);
 	}
 	
 	@Override

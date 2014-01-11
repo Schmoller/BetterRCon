@@ -205,6 +205,6 @@ public class ConsoleMain
 		catch(IOException e)
 		{
 		}
-		mConnection.interrupt();
+		mConnection.close();
 	}
 }

@@ -2,6 +2,7 @@ package au.com.addstar.rcon.client;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,8 +59,7 @@ public class Connection extends Thread
 			context.init(keyFactory.getKeyManagers(), factory.getTrustManagers(), null);
 			
 			mSocket = context.getSocketFactory().createSocket();
-			mSocket.connect(new InetSocketAddress(host, port), 1000);
-			mSocket.setSoTimeout(2000);
+			mSocket.connect(new InetSocketAddress(host, port), 2000);
 			
 			mPassword = password;
 			start();
@@ -107,41 +107,45 @@ public class Connection extends Thread
 	
 	private RConPacket get() throws IOException
 	{
+		DataInputStream stream;
 		synchronized(mSocket)
 		{
-			DataInputStream stream = new DataInputStream(mSocket.getInputStream());
-			RConPacket packet = RConPacket.load(stream);
-			return packet;
+			stream = new DataInputStream(mSocket.getInputStream());
 		}
+		
+		return RConPacket.load(stream);
 	}
 	
-	private boolean hasMore() throws IOException 
-	{
-		return mSocket.getInputStream().available() > 0;
-	}
-	
-	private boolean doLogin() throws IOException
+	private boolean doLogin()
 	{
 		String username = "test";
 		
-		PacketLogin loginPacket = new PacketLogin(username, mPassword.hashCode());
-		send(loginPacket);
-		
-		RConPacket loginResponse = get();
-		if(loginResponse == null)
+		try
 		{
-			ConsoleMain.printString("Connection error");
-			return false;
+			PacketLogin loginPacket = new PacketLogin(username, mPassword.hashCode());
+			send(loginPacket);
+			
+			RConPacket loginResponse = get();
+			if(loginResponse == null)
+			{
+				ConsoleMain.printString("Connection error");
+				return false;
+			}
+			
+			if(loginResponse instanceof PacketLogin && ((PacketLogin)loginResponse).username.equals(username))
+			{
+				ConsoleMain.printString("Connected to minecraft server. Type quit to exit");
+				return true;
+			}
+			else
+			{
+				ConsoleMain.printString("Unable to authenticate, invalid password." + loginResponse);
+				return false;
+			}
 		}
-		
-		if(loginResponse instanceof PacketLogin && ((PacketLogin)loginResponse).username.equals(username))
+		catch(IOException e)
 		{
-			ConsoleMain.printString("Connected to minecraft server. Type quit to exit");
-			return true;
-		}
-		else
-		{
-			ConsoleMain.printString("Unable to authenticate, invalid password.");
+			e.printStackTrace();
 			return false;
 		}
 	}
@@ -149,36 +153,31 @@ public class Connection extends Thread
 	@Override
 	public void run()
 	{
+		if(!doLogin())
+		{
+			synchronized(mSocket)
+			{
+				try
+				{
+					mSocket.close();
+				}
+				catch(IOException e) {}
+				finally
+				{
+					mSocket = null;
+				}
+			}
+			return;
+		}
+		
 		try
 		{
-			if(!doLogin())
-			{
-				synchronized(mSocket)
-				{
-					try
-					{
-						mSocket.close();
-					}
-					catch(IOException e) {}
-					finally
-					{
-						mSocket = null;
-					}
-				}
-				return;
-			}
-			
 			while(true)
 			{
 				if(isInterrupted())
 					break;
-				if(!hasMore())
-					continue;
-				
+
 				RConPacket response = get();
-				
-				if(response == null)
-					break;
 				
 				synchronized(mWaiters)
 				{
@@ -198,7 +197,15 @@ public class Connection extends Thread
 		}
 		catch(SocketException e)
 		{
-			ConsoleMain.printString("Connection error: " + e.getMessage());
+			if(!mSocket.isClosed())
+			{
+				ConsoleMain.printString("Connection error: " + e.getMessage());
+				e.printStackTrace();
+			}
+		}
+		catch(EOFException e)
+		{
+			// Con shutdown. Silent stop
 		}
 		catch(IOException e)
 		{
@@ -357,5 +364,19 @@ public class Connection extends Thread
 			}
 		}
 		
+	}
+
+	public void close()
+	{
+		try
+		{
+			synchronized(mSocket)
+			{
+				mSocket.close();
+			}
+		}
+		catch(IOException e) {}
+		
+		interrupt();
 	}
 }
