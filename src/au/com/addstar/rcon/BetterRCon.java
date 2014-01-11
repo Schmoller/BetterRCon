@@ -1,9 +1,11 @@
 package au.com.addstar.rcon;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.config.DefaultConfiguration;
 import org.bukkit.Bukkit;
@@ -102,6 +104,31 @@ public class BetterRCon extends JavaPlugin
 			throw new RuntimeException(e);
 		}
 		return mCommandMap;
+	}
+
+	public static void sendLog( LogEvent event )
+	{
+		try
+		{
+			for(RconConnection connection : instance.mThread.getConnections())
+			{
+				if(connection.isSilent())
+					continue;
+				
+				if(connection.noFormat())
+					connection.sendRawMessage(event.getMessage().getFormattedMessage());
+				else
+					connection.sendRawMessage(new String(RConsoleAppender.layout.toByteArray(event), "UTF-8"));
+			}
+		}
+		catch ( UnsupportedEncodingException e )
+		{
+		}
+	}
+	
+	public static java.util.logging.Logger getLog()
+	{
+		return instance.getLogger();
 	}
 	
 }

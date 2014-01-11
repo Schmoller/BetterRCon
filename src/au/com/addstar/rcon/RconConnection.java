@@ -29,7 +29,12 @@ public class RconConnection implements RemoteConsoleCommandSender
 	
 	private String format = "[%d %l]: %m";
 	private SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
-	private boolean includeFormat = true;
+	
+	private String mUsername;
+	private boolean mNoFormat;
+	private boolean mSilent;
+	
+	private boolean mHasLoggedIn = false;
 	
 	public RconConnection(Socket socket)
 	{
@@ -50,16 +55,26 @@ public class RconConnection implements RemoteConsoleCommandSender
 		mThread = thread;
 	}
 	
+	public boolean isSilent()
+	{
+		return mSilent;
+	}
+	
+	public boolean noFormat()
+	{
+		return mNoFormat;
+	}
+	
 	public void send(RConPacket packet)
 	{
-		if(!mSocket.isClosed())
+		if(!mSocket.isClosed() && (mHasLoggedIn || packet instanceof PacketLogin))
 			BetterRCon.sendPacket(packet, this);
 	}
 	
 	@Override
 	public String getName()
 	{
-		return "RCon";
+		return mUsername;
 	}
 
 	@Override
@@ -71,7 +86,7 @@ public class RconConnection implements RemoteConsoleCommandSender
 	@Override
 	public void sendMessage( String message )
 	{
-		if(includeFormat)
+		if(!mNoFormat)
 		{
 			String date = dateFormat.format(System.currentTimeMillis());
 			String formatted = format.replaceAll("\\%d", date);
@@ -188,6 +203,8 @@ public class RconConnection implements RemoteConsoleCommandSender
 	{
 		if(packet instanceof PacketLogin)
 			handleLogin((PacketLogin)packet);
+		else if(!mHasLoggedIn)
+			mThread.terminate();
 		else if(packet instanceof PacketCommand)
 			handleCommand((PacketCommand)packet);
 		else if(packet instanceof PacketTabCompleteRequest)
@@ -199,11 +216,19 @@ public class RconConnection implements RemoteConsoleCommandSender
 	{
 		if(BetterRCon.isValid(packet.username, packet.passwordHash))
 		{
-			send(new PacketLogin(packet.username, 0));
+			mUsername = packet.username;
+			mNoFormat = packet.noFormat;
+			mSilent = packet.silentMode;
+			
+			if(!mSilent)
+				BetterRCon.getLog().info(String.format("%s logged in from %s", mUsername, mSocket.getInetAddress()));
+			
+			mHasLoggedIn = true;
+			send(new PacketLogin(packet.username, 0, false, false));
 		}
 		else
 		{
-			send(new PacketLogin("", 0));
+			send(new PacketLogin("", 0, false, false));
 			close();
 		}
 	}

@@ -111,7 +111,6 @@ public class RConThread extends Thread
 				try
 				{
 					Socket socket = mSocket.accept();
-					System.out.println("RCON connection from " + socket.getInetAddress());
 					RconConnection con = new RconConnection(socket);
 					RconConnectionThread conObj = new RconConnectionThread(con, this);
 					con.setThread(conObj);

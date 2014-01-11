@@ -159,15 +159,22 @@ public class ConsoleMain
 		mHost = host;
 		mPort = port;
 		
-		mUsername = username;
-		mPassword = password;
+		if(username == null)
+			mUsername = "Console";
+		else
+			mUsername = username;
+		
+		if(password == null)
+			mPassword = "";
+		else
+			mPassword = password;
 	}
 	
 	public void run()
 	{
 		try
 		{
-			mConnection = new Connection(mHost, mPort, mPassword);
+			mConnection = new Connection(mHost, mPort);
 		}
 		catch(IOException e)
 		{
@@ -185,6 +192,12 @@ public class ConsoleMain
 
 		try
 		{
+			if(!mConnection.login(mUsername, mPassword, false, false))
+			{
+				mConnection.close();
+				return;
+			}
+			
 			while(true)
 			{
 				if(!mConnection.isOpen())

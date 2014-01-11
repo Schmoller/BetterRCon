@@ -32,11 +32,9 @@ import au.com.addstar.rcon.packets.*;
 public class Connection extends Thread
 {
 	private Socket mSocket;
-	private String mPassword;
-	
 	private ArrayDeque<PacketWaiter<? extends RConPacket>> mWaiters = new ArrayDeque<PacketWaiter<? extends RConPacket>>();
 	
-	public Connection(String host, int port, String password) throws IOException
+	public Connection(String host, int port) throws IOException
 	{
 		try
 		{
@@ -61,7 +59,6 @@ public class Connection extends Thread
 			mSocket = context.getSocketFactory().createSocket();
 			mSocket.connect(new InetSocketAddress(host, port), 2000);
 			
-			mPassword = password;
 			start();
 		}
 		catch ( KeyStoreException e )
@@ -107,69 +104,53 @@ public class Connection extends Thread
 	
 	private RConPacket get() throws IOException
 	{
-		DataInputStream stream;
-		synchronized(mSocket)
-		{
-			stream = new DataInputStream(mSocket.getInputStream());
-		}
-		
+		DataInputStream stream = new DataInputStream(mSocket.getInputStream());
 		return RConPacket.load(stream);
 	}
 	
-	private boolean doLogin()
+	public boolean login(String username, String password, boolean silent, boolean noFormat)
 	{
-		String username = "test";
-		
 		try
 		{
-			PacketLogin loginPacket = new PacketLogin(username, mPassword.hashCode());
+			PacketLogin loginPacket = new PacketLogin(username, password.hashCode(), silent, noFormat);
 			send(loginPacket);
 			
-			RConPacket loginResponse = get();
-			if(loginResponse == null)
-			{
-				ConsoleMain.printString("Connection error");
-				return false;
-			}
+			Future<PacketLogin> result = waitForPacket(PacketLogin.class);
 			
-			if(loginResponse instanceof PacketLogin && ((PacketLogin)loginResponse).username.equals(username))
+			PacketLogin packet = result.get(2000, TimeUnit.MILLISECONDS);
+			
+			if(packet.username.equals(username))
 			{
 				ConsoleMain.printString("Connected to minecraft server. Type quit to exit");
 				return true;
 			}
 			else
 			{
-				ConsoleMain.printString("Unable to authenticate, invalid password." + loginResponse);
+				ConsoleMain.printString("Unable to authenticate, invalid password.");
 				return false;
 			}
 		}
+		catch(TimeoutException e)
+		{
+			ConsoleMain.printString("Unable to connect to server. Connection timeout.");
+		}
 		catch(IOException e)
 		{
-			e.printStackTrace();
-			return false;
+			ConsoleMain.printString("Connection error: " + e.getMessage());
 		}
+		catch ( InterruptedException e )
+		{
+		}
+		catch ( ExecutionException e )
+		{
+		}
+		
+		return false;
 	}
 	
 	@Override
 	public void run()
 	{
-		if(!doLogin())
-		{
-			synchronized(mSocket)
-			{
-				try
-				{
-					mSocket.close();
-				}
-				catch(IOException e) {}
-				finally
-				{
-					mSocket = null;
-				}
-			}
-			return;
-		}
-		
 		try
 		{
 			while(true)
@@ -213,18 +194,11 @@ public class Connection extends Thread
 		}
 		finally
 		{
-			synchronized(mSocket)
+			try
 			{
-				try
-				{
-					mSocket.close();
-				}
-				catch(IOException e) {}
-				finally
-				{
-					mSocket = null;
-				}
+				mSocket.close();
 			}
+			catch(IOException e) {}
 		}
 	}
 	
@@ -269,6 +243,17 @@ public class Connection extends Thread
 		{
 			return null;
 		}
+	}
+	
+	public void close()
+	{
+		try
+		{
+			mSocket.close();
+		}
+		catch(IOException e) {}
+		
+		interrupt();
 	}
 	
 	private static class PacketWaiter<T extends RConPacket> implements Future<T>
@@ -366,17 +351,5 @@ public class Connection extends Thread
 		
 	}
 
-	public void close()
-	{
-		try
-		{
-			synchronized(mSocket)
-			{
-				mSocket.close();
-			}
-		}
-		catch(IOException e) {}
-		
-		interrupt();
-	}
+	
 }
