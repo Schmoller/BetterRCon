@@ -1,5 +1,6 @@
 package au.com.addstar.rcon.auth;
 
+import org.apache.commons.lang.Validate;
 import org.bukkit.configuration.ConfigurationSection;
 
 public class User extends PermissionObject
@@ -24,5 +25,25 @@ public class User extends PermissionObject
 	public void setGroup(String group)
 	{
 		getConfig().set("group", group);
+	}
+	
+	public StoredPassword getPassword()
+	{
+		String stored = getConfig().getString("password", null);
+		if(stored == null)
+			return null;
+		
+		String[] parts = stored.split(":");
+		if(parts.length != 2)
+			return null;
+		
+		return new StoredPassword(parts[0], parts[1]);
+	}
+	
+	public void setPassword(StoredPassword password)
+	{
+		Validate.notNull(password);
+		
+		getConfig().set("password", String.format("%s:%s", password.getHash(), password.getSalt()));
 	}
 }

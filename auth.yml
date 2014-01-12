@@ -1,5 +1,6 @@
 users:
-  
+  Console:
+    password:
 groups:
   Admin:
     op: true

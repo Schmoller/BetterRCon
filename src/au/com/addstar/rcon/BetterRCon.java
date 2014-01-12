@@ -16,6 +16,8 @@ import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import au.com.addstar.rcon.auth.AuthManager;
+import au.com.addstar.rcon.auth.User;
+import au.com.addstar.rcon.commands.PasswordCommand;
 import au.com.addstar.rcon.packets.RConPacket;
 
 public class BetterRCon extends JavaPlugin
@@ -52,6 +54,8 @@ public class BetterRCon extends JavaPlugin
 			die();
 			return;
 		}
+		
+		loadCommands();
 	}
 	
 	private void die()
@@ -71,18 +75,23 @@ public class BetterRCon extends JavaPlugin
 		try
 		{
 			mAuth.read();
-			return true;
 		}
 		catch(InvalidConfigurationException e)
 		{
 			getLogger().severe("Bad value in auth.yml: " + e.getMessage());
+			return false;
 		}
 		catch(IOException e)
 		{
 			e.printStackTrace();
+			return false;
 		}
 		
-		return false;
+		User consoleUser = mAuth.getUser("Console");
+		if(consoleUser.getPassword() == null)
+			getLogger().severe("ATTENTION! No password for the Console account has been set! Please user '/rcon password <password>' to set it.");
+		
+		return true;
 	}
 	
 	private boolean loadConnectionThread()
@@ -109,6 +118,15 @@ public class BetterRCon extends JavaPlugin
 		log.addAppender(mAppender);
 		
 		return true;
+	}
+	
+	private void loadCommands()
+	{
+		CommandDispatcher dispatch = new CommandDispatcher("rcon", "Allows you to manage accounts/connections for the rcon");
+		dispatch.registerCommand(new PasswordCommand());
+		
+		getCommand("rcon").setExecutor(dispatch);
+		getCommand("rcon").setTabCompleter(dispatch);
 	}
 	
 	@Override
@@ -156,12 +174,7 @@ public class BetterRCon extends JavaPlugin
 		for(RconConnection connection : instance.mThread.getConnections())
 			connection.sendRawMessage(message);
 	}
-	
-	public static boolean isValid(String username, String password)
-	{
-		return true;
-	}
-	
+
 	private static CommandMap mCommandMap = null;
 	
 	public static CommandMap getCommandMap()

@@ -7,7 +7,7 @@ import java.io.IOException;
 public class PacketLogin extends RConPacket
 {
 	public String username;
-	public String password;
+	public char[] password;
 	
 	public boolean silentMode;
 	public boolean noFormat;
@@ -17,7 +17,7 @@ public class PacketLogin extends RConPacket
 		super(1);
 	}
 	
-	public PacketLogin(String username, String password, boolean silent, boolean noFormat)
+	public PacketLogin(String username, char[] password, boolean silent, boolean noFormat)
 	{
 		super(1);
 		this.username = username;
@@ -31,7 +31,10 @@ public class PacketLogin extends RConPacket
 	{
 		super.write(output);
 		output.writeUTF(username);
-		output.writeUTF(password);
+		
+		output.writeShort(password.length);
+		for(int i = 0; i < password.length; ++i)
+			output.writeChar(password[i]);
 		
 		int flags = 0;
 		if(silentMode)
@@ -46,7 +49,11 @@ public class PacketLogin extends RConPacket
 	public void read( DataInput input ) throws IOException
 	{
 		username = input.readUTF();
-		password = input.readUTF();
+		
+		int passwordLen = input.readShort();
+		password = new char[passwordLen];
+		for(int i = 0; i < passwordLen; ++i)
+			password[i] = input.readChar();
 		
 		int flags = input.readUnsignedByte();
 		

@@ -74,6 +74,16 @@ public class AuthManager
 			}
 		}
 		
+		if(!mUsers.containsKey("Console"))
+		{
+			if(userSection == null)
+				userSection = mConfig.createSection("users");
+			
+			User console = new User(userSection.createSection("Console"), this);
+			console.setOp(true);
+			mUsers.put("Console", console);
+		}
+		
 		if(groupSection != null)
 		{
 			for(String key : groupSection.getKeys(false))
@@ -111,6 +121,8 @@ public class AuthManager
 					current = current.getParentGroup();
 				}
 			}
+			
+			write();
 		}
 		catch(InvalidConfigurationException e)
 		{
@@ -134,6 +146,25 @@ public class AuthManager
 	public Group getGroup( String name )
 	{
 		return mGroups.get(name);
+	}
+	
+	public User getUser( String name )
+	{
+		return mUsers.get(name);
+	}
+	
+	public void attemptLogin(String username, char[] password) throws IllegalArgumentException, IllegalAccessException
+	{
+		User user = mUsers.get(username);
+		if(user == null)
+			throw new IllegalArgumentException();
+		
+		StoredPassword existingPassword = user.getPassword();
+		if(existingPassword == null)
+			throw new IllegalAccessException();
+		
+		if(!existingPassword.matches(password))
+			throw new IllegalAccessException();
 	}
 	
 	public synchronized void loadPermissions(RconConnection connection)

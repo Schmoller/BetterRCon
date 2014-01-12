@@ -230,8 +230,10 @@ public class RconConnection implements RemoteConsoleCommandSender
 	
 	private void handleLogin(PacketLogin packet)
 	{
-		if(BetterRCon.isValid(packet.username, packet.password))
+		try
 		{
+			BetterRCon.getAuth().attemptLogin(packet.username, packet.password);
+			
 			mUsername = packet.username;
 			mNoFormat = packet.noFormat;
 			mSilent = packet.silentMode;
@@ -243,12 +245,19 @@ public class RconConnection implements RemoteConsoleCommandSender
 			
 			BetterRCon.getAuth().loadPermissions(this);
 			
-			send(new PacketLogin(packet.username, "OK", false, false));
+			send(new PacketLogin(packet.username, new char[0], false, false));
 		}
-		else
+		catch(IllegalAccessException e)
 		{
-			send(new PacketLogin("", "FAIL", false, false));
-			close();
+			// Bad password
+			send(new PacketLogin("", new char[0], false, false));
+			mThread.terminate();
+		}
+		catch(IllegalArgumentException e)
+		{
+			// Bad username
+			send(new PacketLogin("", new char[0], false, false));
+			mThread.terminate();
 		}
 	}
 	

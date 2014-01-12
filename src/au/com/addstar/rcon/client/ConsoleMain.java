@@ -150,7 +150,7 @@ public class ConsoleMain
 	private int mPort;
 	
 	private String mUsername;
-	private String mPassword;
+	private char[] mPassword;
 	
 	private Connection mConnection;
 	
@@ -165,9 +165,9 @@ public class ConsoleMain
 			mUsername = username;
 		
 		if(password == null)
-			mPassword = "";
+			mPassword = new char[0];
 		else
-			mPassword = password;
+			mPassword = password.toCharArray();
 	}
 	
 	public void run()

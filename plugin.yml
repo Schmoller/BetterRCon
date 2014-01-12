@@ -6,5 +6,25 @@ description: Provides a better RCon experience when combined with <insert progra
 
 main: au.com.addstar.rcon.BetterRCon
 
+permission: 
+  rcon.account.manage:
+    description: Allows you to add/remove rcon accounts
+    default: op
+  rcon.connections.list:
+    description: Allows you to list rcon connections
+    default: op
+  rcon.connections.kick:
+    description: Allows you to kick an rcon connection
+    default: op
+  rcon.start:
+    description: Allows you to start and stop the rcon server
+    default: op
+  rcon.manage.password:
+    description: Allows you to change the rcons password
+    default: op
 
+commands:
+  rcon:
+    description: Allows you to manage rcon accounts, and connections
+    
 

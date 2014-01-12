@@ -108,7 +108,7 @@ public class Connection extends Thread
 		return RConPacket.load(stream);
 	}
 	
-	public boolean login(String username, String password, boolean silent, boolean noFormat)
+	public boolean login(String username, char[] password, boolean silent, boolean noFormat)
 	{
 		try
 		{
