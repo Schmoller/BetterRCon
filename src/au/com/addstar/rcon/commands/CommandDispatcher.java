@@ -1,32 +1,24 @@
-package au.com.addstar.rcon;
+package au.com.addstar.rcon.commands;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
 import org.bukkit.ChatColor;
-import org.bukkit.command.BlockCommandSender;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.command.RemoteConsoleCommandSender;
-import org.bukkit.command.TabCompleter;
-import org.bukkit.entity.Player;
 
 /**
  * This allows sub commands to be handled in a clean easily expandable way.
  * Just create a new command that implements ICommand
  * Then register it with registerCommand() in the static constructor
  * 
- * Try to keep names and aliases in lowercase
- * 
  * @author Schmoller
  *
  */
-public class CommandDispatcher implements CommandExecutor, TabCompleter
+public class CommandDispatcher
 {
 	private String mRootCommandName;
 	private String mRootCommandDescription;
@@ -57,8 +49,7 @@ public class CommandDispatcher implements CommandExecutor, TabCompleter
 		mDefaultCommand = command;
 	}
 	
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) 
+	public boolean dispatchCommand(CommandSender sender, String label, String[] args)
 	{
 		if(args.length == 0 && mDefaultCommand == null)
 		{
@@ -110,34 +101,24 @@ public class CommandDispatcher implements CommandExecutor, TabCompleter
 		}
 		
 		// Check that the sender is correct
-		if(!com.canBeConsole() && (sender instanceof ConsoleCommandSender || sender instanceof RemoteConsoleCommandSender))
+		if(!com.getAllowedSenders().contains(CommandSenderType.from(sender)))
 		{
 			if(com == mDefaultCommand)
 				displayUsage(sender, label, subCommand);
 			else
-				sender.sendMessage(ChatColor.RED + "/" + label + " " + subCommand + " cannot be called from the console.");
-			return true;
-		}
-		if(!com.canBeCommandBlock() && sender instanceof BlockCommandSender)
-		{
-			if(com == mDefaultCommand)
-				displayUsage(sender, label, subCommand);
-			else
-				sender.sendMessage(ChatColor.RED + "/" + label + " " + subCommand + " cannot be called from a command block.");
+				sender.sendMessage(ChatColor.RED + String.format("%s %s cannot be called from the %s", label, subCommand, CommandSenderType.from(sender)));
 			return true;
 		}
 		
 		// Check that they have permission
 		if(com.getPermission() != null && !sender.hasPermission(com.getPermission()))
 		{
-			sender.sendMessage(ChatColor.RED + "You do not have permission to use /" + label + " " + subCommand);
+			sender.sendMessage(ChatColor.RED + String.format("You do not have permission to use %s %s", label, subCommand));
 			return true;
 		}
 		
 		if(!com.onCommand(sender, subCommand, subArgs))
-		{
 			sender.sendMessage(ChatColor.RED + "Usage: " + com.getUsageString(subCommand, sender));
-		}
 		
 		return true;
 	}
@@ -151,7 +132,7 @@ public class CommandDispatcher implements CommandExecutor, TabCompleter
 		for(ICommand command : mCommands.values())
 		{
 			// Check that the sender is correct
-			if(!command.canBeConsole() && (sender instanceof ConsoleCommandSender || sender instanceof RemoteConsoleCommandSender))
+			if(!command.getAllowedSenders().contains(CommandSenderType.from(sender)))
 				continue;
 			
 			// Check that they have permission
@@ -188,8 +169,7 @@ public class CommandDispatcher implements CommandExecutor, TabCompleter
 		
 	}
 	
-	@Override
-	public List<String> onTabComplete( CommandSender sender, Command command, String label, String[] args )
+	public List<String> tabComplete( CommandSender sender, String label, String[] args )
 	{
 		List<String> results = new ArrayList<String>();
 		if(args.length == 1) // Tab completing the sub command
@@ -199,7 +179,7 @@ public class CommandDispatcher implements CommandExecutor, TabCompleter
 				if(registeredCommand.getName().toLowerCase().startsWith(args[0].toLowerCase()))
 				{
 					// Check that the sender is correct
-					if(!registeredCommand.canBeConsole() && (sender instanceof ConsoleCommandSender || sender instanceof RemoteConsoleCommandSender))
+					if(!registeredCommand.getAllowedSenders().contains(CommandSenderType.from(sender)))
 						continue;
 					
 					// Check that they have permission
@@ -248,16 +228,12 @@ public class CommandDispatcher implements CommandExecutor, TabCompleter
 			}
 			
 			// Check that the sender is correct
-			if(!com.canBeConsole() && (sender instanceof ConsoleCommandSender || sender instanceof RemoteConsoleCommandSender))
-			{
+			if(!com.getAllowedSenders().contains(CommandSenderType.from(sender)))
 				return results;
-			}
 			
 			// Check that they have permission
 			if(com.getPermission() != null && !sender.hasPermission(com.getPermission()))
-			{
 				return results;
-			}
 			
 			results = com.onTabComplete(sender, subCommand, subArgs);
 			if(results == null)
@@ -300,17 +276,11 @@ public class CommandDispatcher implements CommandExecutor, TabCompleter
 		}
 
 		@Override
-		public boolean canBeConsole()
+		public EnumSet<CommandSenderType> getAllowedSenders()
 		{
-			return true;
+			return EnumSet.allOf(CommandSenderType.class);
 		}
-
-		@Override
-		public boolean canBeCommandBlock()
-		{
-			return true;
-		}
-
+		
 		@Override
 		public boolean onCommand( CommandSender sender, String label, String[] args )
 		{
@@ -322,9 +292,7 @@ public class CommandDispatcher implements CommandExecutor, TabCompleter
 			
 			if(mDefaultCommand != null)
 			{
-				if((sender instanceof Player || (mDefaultCommand.canBeCommandBlock() && sender instanceof BlockCommandSender) 
-						|| (mDefaultCommand.canBeConsole() && (sender instanceof ConsoleCommandSender || sender instanceof RemoteConsoleCommandSender)))
-						&& (mDefaultCommand.getPermission() == null || sender.hasPermission(mDefaultCommand.getPermission())))
+				if(mDefaultCommand.getAllowedSenders().contains(CommandSenderType.from(sender)) && (mDefaultCommand.getPermission() == null || sender.hasPermission(mDefaultCommand.getPermission())))
 				{
 					sender.sendMessage(ChatColor.GOLD + "/" + mRootCommandName + " " + mDefaultCommand.getUsageString(mDefaultCommand.getName(), sender));
 					
@@ -337,9 +305,7 @@ public class CommandDispatcher implements CommandExecutor, TabCompleter
 			for(ICommand command : mCommands.values())
 			{
 				// Dont show commands that are irrelevant
-				if(!command.canBeCommandBlock() && sender instanceof BlockCommandSender)
-					continue;
-				if(!command.canBeConsole() && (sender instanceof ConsoleCommandSender || sender instanceof RemoteConsoleCommandSender))
+				if(!command.getAllowedSenders().contains(CommandSenderType.from(sender)))
 					continue;
 				
 				if(command.getPermission() != null && !sender.hasPermission(command.getPermission()))

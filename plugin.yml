@@ -10,6 +10,16 @@ permission:
   rcon.account.manage:
     description: Allows you to add/remove rcon accounts
     default: op
+  rcon.account.manage.add:
+    description: Allows you to add accounts
+    default: op
+    children:
+      rcon.account.manage: true
+  rcon.account.manage.remove:
+    description: Allows you to remove accounts
+    default: false
+    children:
+      rcon.account.manage: true
   rcon.connections.list:
     description: Allows you to list rcon connections
     default: op

@@ -17,7 +17,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import au.com.addstar.rcon.auth.AuthManager;
 import au.com.addstar.rcon.auth.User;
+import au.com.addstar.rcon.commands.AccountCommand;
 import au.com.addstar.rcon.commands.PasswordCommand;
+import au.com.addstar.rcon.commands.RootCommandDispatcher;
+import au.com.addstar.rcon.commands.accounts.AddCommand;
+import au.com.addstar.rcon.commands.accounts.RemoveCommand;
 import au.com.addstar.rcon.packets.RConPacket;
 
 public class BetterRCon extends JavaPlugin
@@ -122,11 +126,17 @@ public class BetterRCon extends JavaPlugin
 	
 	private void loadCommands()
 	{
-		CommandDispatcher dispatch = new CommandDispatcher("rcon", "Allows you to manage accounts/connections for the rcon");
+		RootCommandDispatcher dispatch = new RootCommandDispatcher("rcon", "Allows you to manage accounts/connections for the rcon");
 		dispatch.registerCommand(new PasswordCommand());
 		
-		getCommand("rcon").setExecutor(dispatch);
-		getCommand("rcon").setTabCompleter(dispatch);
+		AccountCommand account = new AccountCommand();
+		dispatch.registerCommand(account);
+		
+		account.registerCommand(new AddCommand());
+		account.registerCommand(new au.com.addstar.rcon.commands.accounts.PasswordCommand());
+		account.registerCommand(new RemoveCommand());		
+		
+		dispatch.registerAs(getCommand("rcon"));
 	}
 	
 	@Override

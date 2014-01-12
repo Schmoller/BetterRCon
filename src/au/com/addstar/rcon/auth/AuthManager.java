@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,6 +72,10 @@ public class AuthManager
 					continue;
 				
 				User user = new User(userSection.getConfigurationSection(key), this);
+				
+				if(user.getPassword() == null)
+					mPlugin.getLogger().warning(String.format("User %s has no password! Account disabled until one is set.", key));
+
 				mUsers.put(user.getName(), user);
 			}
 		}
@@ -135,6 +141,9 @@ public class AuthManager
 	
 	public void write() throws IOException
 	{
+		if(mAuthFile.exists())
+			Files.copy(mAuthFile.toPath(), new File(mAuthFile.getParentFile(), mAuthFile.getName() + ".old").toPath(), StandardCopyOption.REPLACE_EXISTING);
+
 		mConfig.save(mAuthFile);
 	}
 	
@@ -152,6 +161,27 @@ public class AuthManager
 	{
 		return mUsers.get(name);
 	}
+	
+	public User createUser( String name ) throws IllegalArgumentException
+	{
+		if(mUsers.containsKey(name))
+			throw new IllegalArgumentException("Username already exists");
+		
+		if(!isValidName(name))
+			throw new IllegalArgumentException("Username contains invalid characters");
+		
+		return new User(mConfig.createSection(name), this);
+	}
+	
+	public void removeUser( String name ) throws IllegalArgumentException
+	{
+		if(!mUsers.containsKey(name))
+			throw new IllegalArgumentException("That username does not exist");
+		
+		mConfig.set(name, null);
+		mUsers.remove(name);
+	}
+	
 	
 	public void attemptLogin(String username, char[] password) throws IllegalArgumentException, IllegalAccessException
 	{
@@ -173,7 +203,10 @@ public class AuthManager
 		
 		if(connection.getName().equals("Console"))
 		{
-			// Full perms. Do nothing
+			// So this account can remove user accounts
+			attachment.setPermission("rcon.account.manage.remove", true);
+			
+			// Otherwise, full permissions
 		}
 		else
 		{
@@ -244,5 +277,18 @@ public class AuthManager
 			{
 			}
 		}
+	}
+	
+	
+	private static String allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_";
+	public static boolean isValidName(String name)
+	{
+		for(char c : name.toCharArray())
+		{
+			if(allowedChars.indexOf(c) == -1)
+				return false;
+		}
+		
+		return true;
 	}
 }

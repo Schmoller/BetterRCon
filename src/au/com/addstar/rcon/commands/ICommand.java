@@ -1,5 +1,6 @@
-package au.com.addstar.rcon;
+package au.com.addstar.rcon.commands;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import org.bukkit.command.CommandSender;
@@ -35,14 +36,10 @@ public interface ICommand
 	public String getDescription();
 
 	/**
-	 * Can the sender of this command be a console?
+	 * Gets what types of command senders are allowed
+	 * @return
 	 */
-	public boolean canBeConsole();
-	
-	/**
-	 * Can the sender of this command be a command block?
-	 */
-	public boolean canBeCommandBlock();
+	public EnumSet<CommandSenderType> getAllowedSenders();
 	
 	/**
 	 * Called when this command is executed. By this time the permission has been checked, and if this command does not accept the console as a sender, that wont trigger this command.
