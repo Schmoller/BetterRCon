@@ -205,6 +205,7 @@ public class AuthManager
 		{
 			// So this account can remove user accounts
 			attachment.setPermission("rcon.account.manage.remove", true);
+			attachment.setPermission("rcon.account.manage.password.others", true);
 			
 			// Otherwise, full permissions
 		}
@@ -254,7 +255,6 @@ public class AuthManager
 				}
 			}
 			
-			
 			try
 			{
 				@SuppressWarnings( "unchecked" )
@@ -267,6 +267,10 @@ public class AuthManager
 					else
 						permissions.put(perm.toLowerCase(), true);
 				}
+				
+				// *** Forced permissions: ***
+				// This one allows the connection to manage its password
+				permissions.put("rcon.account.manage", true);
 				
 				connection.recalculatePermissions();
 			}

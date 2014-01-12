@@ -3,6 +3,7 @@ package au.com.addstar.rcon.commands.accounts;
 import java.util.EnumSet;
 import java.util.List;
 
+import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
 import au.com.addstar.rcon.BetterRCon;
@@ -74,6 +75,7 @@ public class PasswordCommand extends au.com.addstar.rcon.commands.PasswordComman
 			if(user == null) 
 				user = BetterRCon.getAuth().getUser("Console");
 			
+			User thisCon = user;
 			if(args.length == 1)
 				newPassword = args[0].toCharArray();
 			else if(args.length == 3)
@@ -93,6 +95,12 @@ public class PasswordCommand extends au.com.addstar.rcon.commands.PasswordComman
 					oldPassword = args[0].toCharArray();
 				
 				newPassword = args[1].toCharArray();
+			}
+			
+			if(!thisCon.equals(user) && !sender.hasPermission("rcon.account.manage.password.others"))
+			{
+				sender.sendMessage(ChatColor.RED + "You do not have permission to change the passwords of other accounts.");
+				return true;
 			}
 		}
 		else

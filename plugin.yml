@@ -15,6 +15,11 @@ permission:
     default: op
     children:
       rcon.account.manage: true
+  rcon.account.manage.password.others:
+    description: Allows an RCon connection to change other accounts passwords. NOTE This is ONLY for RCon connections.
+    default: false
+    children:
+      rcon.account.manage: true
   rcon.account.manage.remove:
     description: Allows you to remove accounts
     default: false
