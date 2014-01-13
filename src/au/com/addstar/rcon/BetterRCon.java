@@ -21,6 +21,7 @@ import au.com.addstar.rcon.commands.AccountCommand;
 import au.com.addstar.rcon.commands.PasswordCommand;
 import au.com.addstar.rcon.commands.RootCommandDispatcher;
 import au.com.addstar.rcon.commands.accounts.AddCommand;
+import au.com.addstar.rcon.commands.accounts.CopyCommand;
 import au.com.addstar.rcon.commands.accounts.RemoveCommand;
 import au.com.addstar.rcon.packets.RConPacket;
 
@@ -134,7 +135,8 @@ public class BetterRCon extends JavaPlugin
 		
 		account.registerCommand(new AddCommand());
 		account.registerCommand(new au.com.addstar.rcon.commands.accounts.PasswordCommand());
-		account.registerCommand(new RemoveCommand());		
+		account.registerCommand(new RemoveCommand());
+		account.registerCommand(new CopyCommand());
 		
 		dispatch.registerAs(getCommand("rcon"));
 	}
