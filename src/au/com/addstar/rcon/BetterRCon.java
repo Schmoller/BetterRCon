@@ -236,4 +236,9 @@ public class BetterRCon extends JavaPlugin
 		return instance.mAuth;
 	}
 	
+	public static void runSync(Runnable runnable)
+	{
+		Bukkit.getScheduler().runTask(instance, runnable);
+	}
+	
 }

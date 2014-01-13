@@ -1,7 +1,5 @@
 package au.com.addstar.rcon;
 
-import java.io.IOException;
-import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Set;
@@ -15,6 +13,7 @@ import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
 
 import au.com.addstar.rcon.auth.User;
+import au.com.addstar.rcon.events.RconCommandPreprocessEvent;
 import au.com.addstar.rcon.packets.PacketCommand;
 import au.com.addstar.rcon.packets.PacketLogin;
 import au.com.addstar.rcon.packets.PacketMessage;
@@ -24,7 +23,6 @@ import au.com.addstar.rcon.packets.RConPacket;
 
 public class RconConnection implements RemoteConsoleCommandSender
 {
-	private Socket mSocket;
 	private RconConnectionThread mThread;
 	private PermissibleBase perm = new PermissibleBase(this);
 	
@@ -35,13 +33,14 @@ public class RconConnection implements RemoteConsoleCommandSender
 	private boolean mNoFormat;
 	private boolean mSilent;
 	
-	private boolean mHasLoggedIn = false;
-	
 	private User mUser;
 	
-	public RconConnection(Socket socket)
+	public RconConnection(PacketLogin packet, RconConnectionThread thread)
 	{
-		mSocket = socket;
+		mUsername = packet.username;
+		mNoFormat = packet.noFormat;
+		mSilent = packet.silentMode;
+		mThread = thread;
 	}
 	
 	public void setUser(User user)
@@ -54,18 +53,9 @@ public class RconConnection implements RemoteConsoleCommandSender
 		return mUser;
 	}
 	
-	public Socket getSocket()
-	{
-		return mSocket;
-	}
-	
 	public RconConnectionThread getThread()
 	{
 		return mThread;
-	}
-	public void setThread(RconConnectionThread thread)
-	{
-		mThread = thread;
 	}
 	
 	public boolean isSilent()
@@ -80,8 +70,7 @@ public class RconConnection implements RemoteConsoleCommandSender
 	
 	public void send(RConPacket packet)
 	{
-		if(!mSocket.isClosed() && (mHasLoggedIn || packet instanceof PacketLogin))
-			BetterRCon.sendPacket(packet, this);
+		BetterRCon.sendPacket(packet, this);
 	}
 	
 	@Override
@@ -206,64 +195,33 @@ public class RconConnection implements RemoteConsoleCommandSender
 	
 	public void close()
 	{
-		try
-		{
-			mSocket.close();
-		}
-		catch(IOException e) {}
-		
 		perm.clearPermissions();
 	}
 	
 	public void handle(RConPacket packet)
 	{
-		if(packet instanceof PacketLogin)
-			handleLogin((PacketLogin)packet);
-		else if(!mHasLoggedIn)
-			mThread.terminate();
-		else if(packet instanceof PacketCommand)
+		if(packet instanceof PacketCommand)
 			handleCommand((PacketCommand)packet);
 		else if(packet instanceof PacketTabCompleteRequest)
 			handleTabComplete((PacketTabCompleteRequest)packet);
 		
 	}
 	
-	private void handleLogin(PacketLogin packet)
+	private void handleCommand(final PacketCommand packet)
 	{
-		try
+		BetterRCon.runSync(new Runnable()
 		{
-			BetterRCon.getAuth().attemptLogin(packet.username, packet.password);
-			
-			mUsername = packet.username;
-			mNoFormat = packet.noFormat;
-			mSilent = packet.silentMode;
-			
-			if(!mSilent)
-				BetterRCon.getLog().info(String.format("%s logged in from %s", mUsername, mSocket.getInetAddress()));
-			
-			mHasLoggedIn = true;
-			
-			BetterRCon.getAuth().loadPermissions(this);
-			
-			send(new PacketLogin(packet.username, new char[0], false, false));
-		}
-		catch(IllegalAccessException e)
-		{
-			// Bad password
-			send(new PacketLogin("", new char[0], false, false));
-			mThread.terminate();
-		}
-		catch(IllegalArgumentException e)
-		{
-			// Bad username
-			send(new PacketLogin("", new char[0], false, false));
-			mThread.terminate();
-		}
-	}
-	
-	private void handleCommand(PacketCommand packet)
-	{
-		Bukkit.dispatchCommand(this, packet.command);
+			@Override
+			public void run()
+			{
+				RconCommandPreprocessEvent event = new RconCommandPreprocessEvent(RconConnection.this, packet.command);
+				Bukkit.getPluginManager().callEvent(event);
+				
+				if(!event.isCancelled())
+					Bukkit.dispatchCommand(RconConnection.this, event.getMessage());
+			}
+		});
+		
 	}
 	
 	private void handleTabComplete(PacketTabCompleteRequest packet)

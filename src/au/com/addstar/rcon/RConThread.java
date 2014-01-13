@@ -42,14 +42,16 @@ public class RConThread extends Thread
 		synchronized(mConnections)
 		{
 			for(RconConnectionThread connection : mConnections)
-				connections.add(connection.getRCON());
+			{
+				if(connection.getRCON() != null)
+					connections.add(connection.getRCON());
+			}
 		}
 		
 		return connections;
 	}
 	
-	@Override
-	public void run()
+	private ServerSocket setupSocket()
 	{
 		try
 		{
@@ -62,47 +64,48 @@ public class RConThread extends Thread
 			context.init(factory.getKeyManagers(), null, null);
 			SSLServerSocketFactory socketFactory = context.getServerSocketFactory();
 			
-			mSocket = socketFactory.createServerSocket();
-			mSocket.bind(new InetSocketAddress(mPort));
-			mSocket.setSoTimeout(30);
-			System.out.println("Better RCon listening on port " + mPort);
+			ServerSocket socket = socketFactory.createServerSocket();
+			socket.bind(new InetSocketAddress(mPort));
+			socket.setSoTimeout(30);
+			return socket;
 		}
 		catch(IOException e)
 		{
 			System.err.println("Cannot start RCon listener. Could not bind socket:");
 			e.printStackTrace();
-			return;
 		}
 		catch ( KeyStoreException e )
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return;
 		}
 		catch ( NoSuchAlgorithmException e )
 		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return;
+			System.err.println("Cannot start RCon listener. Encryption method is not supported by this setup: " + e.getMessage());
 		}
 		catch ( CertificateException e )
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return;
 		}
 		catch ( KeyManagementException e )
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return;
 		}
 		catch ( UnrecoverableKeyException e )
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return;
 		}
+		
+		return null;
+	}
+	
+	@Override
+	public void run()
+	{
+		mSocket = setupSocket();
+		if(mSocket == null)
+			return;
+		
+		System.out.println("Better RCon listening on port " + mPort);
 		
 		try
 		{
@@ -111,9 +114,7 @@ public class RConThread extends Thread
 				try
 				{
 					Socket socket = mSocket.accept();
-					RconConnection con = new RconConnection(socket);
-					RconConnectionThread conObj = new RconConnectionThread(con, this);
-					con.setThread(conObj);
+					RconConnectionThread conObj = new RconConnectionThread(socket, this);
 					
 					synchronized(mConnections)
 					{

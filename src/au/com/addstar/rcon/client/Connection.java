@@ -126,7 +126,7 @@ public class Connection extends Thread
 			}
 			else
 			{
-				ConsoleMain.printString("Unable to authenticate, invalid password.");
+				ConsoleMain.printString("Unable to authenticate, invalid username or password.");
 				return false;
 			}
 		}

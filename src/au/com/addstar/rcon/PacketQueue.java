@@ -3,6 +3,7 @@ package au.com.addstar.rcon;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.net.Socket;
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.Map.Entry;
@@ -50,12 +51,14 @@ public class PacketQueue extends Thread
 					continue;
 				}
 				
-				if(next.getValue().getSocket().isClosed())
+				Socket socket = next.getValue().getThread().getSocket();
+				
+				if(socket.isClosed())
 					continue;
 				
 				try
 				{
-					DataOutputStream stream = new DataOutputStream(next.getValue().getSocket().getOutputStream());
+					DataOutputStream stream = new DataOutputStream(socket.getOutputStream());
 					next.getKey().write(stream);
 					stream.flush();
 				}
