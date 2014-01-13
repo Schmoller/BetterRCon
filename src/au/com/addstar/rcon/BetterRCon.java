@@ -36,12 +36,20 @@ public class BetterRCon extends JavaPlugin
 	private RConsoleAppender mAppender;
 	private AuthManager mAuth;
 	
+	private Config mConfig;
+	
 	@Override
 	public void onEnable()
 	{
 		instance = this;
 		
 		getDataFolder().mkdirs();
+		
+		if(!loadConfig())
+		{
+			die();
+			return;
+		}
 		
 		if(!loadAuth())
 		{
@@ -69,6 +77,19 @@ public class BetterRCon extends JavaPlugin
 	{
 		setEnabled(false);
 		instance = null;
+	}
+	
+	private boolean loadConfig()
+	{
+		mConfig = new Config(new File(getDataFolder(), "config.yml"));
+	
+		if(mConfig.load())
+		{
+			mConfig.save();
+			return true;
+		}
+		
+		return false;
 	}
 	
 	private boolean loadAuth()
@@ -103,7 +124,7 @@ public class BetterRCon extends JavaPlugin
 	
 	private boolean loadConnectionThread()
 	{
-		mThread = new RConThread(8000, this);
+		mThread = new RConThread(mConfig.port, this);
 		mThread.start();
 		mQueue = new PacketQueue();
 		mQueue.start();
