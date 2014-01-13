@@ -23,6 +23,7 @@ import au.com.addstar.rcon.commands.RootCommandDispatcher;
 import au.com.addstar.rcon.commands.accounts.AddCommand;
 import au.com.addstar.rcon.commands.accounts.CopyCommand;
 import au.com.addstar.rcon.commands.accounts.RemoveCommand;
+import au.com.addstar.rcon.compat.CommandHelperCompat;
 import au.com.addstar.rcon.packets.RConPacket;
 
 public class BetterRCon extends JavaPlugin
@@ -61,6 +62,7 @@ public class BetterRCon extends JavaPlugin
 		}
 		
 		loadCommands();
+		loadCompat();
 	}
 	
 	private void die()
@@ -139,6 +141,12 @@ public class BetterRCon extends JavaPlugin
 		account.registerCommand(new CopyCommand());
 		
 		dispatch.registerAs(getCommand("rcon"));
+	}
+	
+	private void loadCompat()
+	{
+		if(Bukkit.getPluginManager().isPluginEnabled("CommandHelper"))
+			CommandHelperCompat.intitialize(this);
 	}
 	
 	@Override

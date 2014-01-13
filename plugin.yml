@@ -6,6 +6,8 @@ description: Provides a better RCon experience when combined with <insert progra
 
 main: au.com.addstar.rcon.BetterRCon
 
+softdepend: [CommandHelper]
+
 permission: 
   rcon.account.manage:
     description: Allows you to add/remove rcon accounts
