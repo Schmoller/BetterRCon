@@ -14,7 +14,7 @@ public class Group extends PermissionObject
 	
 	public String getParent()
 	{
-		return getConfig().getString("parent", "");
+		return getConfig().getString("parent", null);
 	}
 	
 	public Group getParentGroup()

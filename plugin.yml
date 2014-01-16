@@ -27,6 +27,11 @@ permission:
     default: false
     children:
       rcon.account.manage: true
+      
+  rcon.groups.add:
+    description: Allows you to add groups
+  rcon.groups.remove:
+    description: Allows you to remove groups
   rcon.connections.list:
     description: Allows you to list rcon connections
     default: op

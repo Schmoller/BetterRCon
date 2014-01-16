@@ -182,6 +182,37 @@ public class AuthManager
 		mUsers.remove(name);
 	}
 	
+	public Group createGroup( String name ) throws IllegalArgumentException
+	{
+		if(mGroups.containsKey(name))
+			throw new IllegalArgumentException("Group already exists");
+		
+		if(!isValidName(name))
+			throw new IllegalArgumentException("Group name contains invalid characters");
+		
+		return new Group(mConfig.createSection(name), this);
+	}
+	
+	public void removeGroup( String name ) throws IllegalArgumentException
+	{
+		if(!mGroups.containsKey(name))
+			throw new IllegalArgumentException("There is no group by that name");
+		
+		Group group = mGroups.remove(name);
+		
+		for(Group other : mGroups.values())
+		{
+			if(other.getParent().equals(group.getName()))
+				other.setParent(null);
+		}
+		
+		for(User user : mUsers.values())
+		{
+			if(user.getGroup().equals(group.getName()))
+				user.setGroup(null);
+		}
+	}
+	
 	
 	public void attemptLogin(String username, char[] password) throws IllegalArgumentException, IllegalAccessException
 	{
@@ -294,5 +325,11 @@ public class AuthManager
 		}
 		
 		return true;
+	}
+
+	public void recalculatePerms( PermissionObject permObj )
+	{
+		// TODO: Implement this
+		throw new UnsupportedOperationException("Not yet implemented");
 	}
 }

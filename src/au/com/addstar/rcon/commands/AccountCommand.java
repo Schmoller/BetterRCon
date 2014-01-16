@@ -5,11 +5,28 @@ import java.util.List;
 
 import org.bukkit.command.CommandSender;
 
+import au.com.addstar.rcon.commands.accounts.AddCommand;
+import au.com.addstar.rcon.commands.accounts.AddPermCommand;
+import au.com.addstar.rcon.commands.accounts.CopyCommand;
+import au.com.addstar.rcon.commands.accounts.OpCommand;
+import au.com.addstar.rcon.commands.accounts.RemoveCommand;
+import au.com.addstar.rcon.commands.accounts.RemovePermCommand;
+import au.com.addstar.rcon.commands.accounts.SetGroupCommand;
+
 public class AccountCommand extends CommandDispatcher implements ICommand
 {
 	public AccountCommand()
 	{
 		super("account", "Allows you to manage rcon accounts");
+		
+		registerCommand(new AddCommand());
+		registerCommand(new AddPermCommand());
+		registerCommand(new CopyCommand());
+		registerCommand(new OpCommand());
+		registerCommand(new au.com.addstar.rcon.commands.accounts.PasswordCommand());
+		registerCommand(new RemoveCommand());
+		registerCommand(new RemovePermCommand());
+		registerCommand(new SetGroupCommand());
 	}
 	
 	@Override
