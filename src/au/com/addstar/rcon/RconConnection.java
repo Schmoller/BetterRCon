@@ -34,6 +34,7 @@ public class RconConnection implements RemoteConsoleCommandSender
 	private boolean mSilent;
 	
 	private User mUser;
+	private PermissionAttachment mAttachment;
 	
 	public RconConnection(PacketLogin packet, RconConnectionThread thread)
 	{
@@ -228,5 +229,20 @@ public class RconConnection implements RemoteConsoleCommandSender
 	{
 		List<String> results = BetterRCon.getCommandMap().tabComplete(this, packet.request);
 		send(new PacketTabComplete(results));
+	}
+	
+	public PermissionAttachment getPermissions(Plugin plugin)
+	{
+		if(mAttachment != null)
+			return mAttachment;
+		
+		return (mAttachment = perm.addAttachment(plugin)); 
+	}
+	
+	public void removePermissions()
+	{
+		if(mAttachment != null)
+			perm.removeAttachment(mAttachment);
+		mAttachment = null;
 	}
 }

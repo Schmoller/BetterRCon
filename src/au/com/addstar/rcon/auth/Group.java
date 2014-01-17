@@ -26,4 +26,19 @@ public class Group extends PermissionObject
 	{
 		getConfig().set("parent", parent);
 	}
+	
+	@Override
+	public int hashCode()
+	{
+		return getName().hashCode();
+	}
+	
+	@Override
+	public boolean equals( Object obj )
+	{
+		if(!(obj instanceof Group))
+			return false;
+		
+		return ((Group)obj).getName().equals(getName());
+	}
 }

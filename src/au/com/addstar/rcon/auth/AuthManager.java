@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.Plugin;
 
+import au.com.addstar.rcon.BetterRCon;
 import au.com.addstar.rcon.RconConnection;
 
 public class AuthManager
@@ -230,7 +232,8 @@ public class AuthManager
 	
 	public synchronized void loadPermissions(RconConnection connection)
 	{
-		PermissionAttachment attachment = connection.addAttachment(mPlugin);
+		connection.removePermissions();
+		PermissionAttachment attachment = connection.getPermissions(mPlugin);
 		
 		if(connection.getName().equals("Console"))
 		{
@@ -329,7 +332,37 @@ public class AuthManager
 
 	public void recalculatePerms( PermissionObject permObj )
 	{
-		// TODO: Implement this
-		throw new UnsupportedOperationException("Not yet implemented");
+		HashSet<User> toUpdate = new HashSet<User>();
+		if(permObj instanceof User)
+			toUpdate.add((User)permObj);
+		else if(permObj instanceof Group)
+		{
+			ArrayDeque<Group> toSearch = new ArrayDeque<Group>();
+			toSearch.add((Group)permObj);
+			
+			while(!toSearch.isEmpty())
+			{
+				Group group = toSearch.poll();
+				
+				for(User user : mUsers.values())
+				{
+					if(group.equals(user.getGroupObject()))
+						toUpdate.add(user);
+				}
+				
+				for(Group other : mGroups.values())
+				{
+					if(group.equals(other.getParent()))
+						toSearch.add(other);
+				}
+			}
+		}
+		
+		// Now we need to find the RconConnection objects and refresh them all
+		for(RconConnection con : BetterRCon.getAllConnections())
+		{
+			if(toUpdate.contains(con.getUser()))
+				loadPermissions(con);
+		}
 	}
 }

@@ -59,7 +59,7 @@ public class GroupCommand extends CommandDispatcher implements ICommand
 	@Override
 	public EnumSet<CommandSenderType> getAllowedSenders()
 	{
-		return null;
+		return EnumSet.of(CommandSenderType.Player, CommandSenderType.Console);
 	}
 
 	@Override

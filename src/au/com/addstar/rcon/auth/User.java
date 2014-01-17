@@ -46,4 +46,19 @@ public class User extends PermissionObject
 		
 		getConfig().set("password", String.format("%s:%s", password.getHash(), password.getSalt()));
 	}
+	
+	@Override
+	public int hashCode()
+	{
+		return getName().hashCode();
+	}
+	
+	@Override
+	public boolean equals( Object obj )
+	{
+		if(!(obj instanceof User))
+			return false;
+		
+		return ((User)obj).getName().equals(getName());
+	}
 }

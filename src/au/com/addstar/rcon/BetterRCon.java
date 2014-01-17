@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Appender;
@@ -261,5 +262,9 @@ public class BetterRCon extends JavaPlugin
 	{
 		Bukkit.getScheduler().runTask(instance, runnable);
 	}
-	
+
+	public static List<RconConnection> getAllConnections()
+	{
+		return instance.mThread.getConnections();
+	}
 }
