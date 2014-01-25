@@ -81,6 +81,13 @@ public class PasswordCommand extends au.com.addstar.rcon.commands.PasswordComman
 			else if(args.length == 3)
 			{
 				user = BetterRCon.getAuth().getUser(args[0]);
+				
+				if(user == null)
+				{
+					sender.sendMessage(ChatColor.RED + "Unknown user " + args[0]);
+					return true;
+				}
+				
 				oldPassword = args[1].toCharArray();
 				newPassword = args[2].toCharArray();
 			}
@@ -109,6 +116,11 @@ public class PasswordCommand extends au.com.addstar.rcon.commands.PasswordComman
 				return false;
 			
 			user = BetterRCon.getAuth().getUser(args[0]);
+			if(user == null)
+			{
+				sender.sendMessage(ChatColor.RED + "Unknown user " + args[0]);
+				return true;
+			}
 			
 			if(args.length == 2)
 				newPassword = args[1].toCharArray();

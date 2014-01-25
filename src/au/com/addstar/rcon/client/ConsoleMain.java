@@ -17,14 +17,14 @@ public class ConsoleMain
 	
 	static
 	{
-		mColors.put('0', Ansi.ansi().fg(Ansi.Color.BLACK).toString());
-        mColors.put('1', Ansi.ansi().fg(Ansi.Color.BLUE).toString());
-        mColors.put('2', Ansi.ansi().fg(Ansi.Color.GREEN).toString());
-        mColors.put('3', Ansi.ansi().fg(Ansi.Color.CYAN).toString());
-        mColors.put('4', Ansi.ansi().fg(Ansi.Color.RED).toString());
-        mColors.put('5', Ansi.ansi().fg(Ansi.Color.MAGENTA).toString());
-        mColors.put('6', Ansi.ansi().fg(Ansi.Color.YELLOW).bold().toString());
-        mColors.put('7', Ansi.ansi().fg(Ansi.Color.WHITE).toString());
+		mColors.put('0', Ansi.ansi().fg(Ansi.Color.BLACK).boldOff().toString());
+        mColors.put('1', Ansi.ansi().fg(Ansi.Color.BLUE).boldOff().toString());
+        mColors.put('2', Ansi.ansi().fg(Ansi.Color.GREEN).boldOff().toString());
+        mColors.put('3', Ansi.ansi().fg(Ansi.Color.CYAN).boldOff().toString());
+        mColors.put('4', Ansi.ansi().fg(Ansi.Color.RED).boldOff().toString());
+        mColors.put('5', Ansi.ansi().fg(Ansi.Color.MAGENTA).boldOff().toString());
+        mColors.put('6', Ansi.ansi().fg(Ansi.Color.YELLOW).boldOff().toString());
+        mColors.put('7', Ansi.ansi().fg(Ansi.Color.WHITE).boldOff().toString());
         mColors.put('8', Ansi.ansi().fg(Ansi.Color.BLACK).bold().toString());
         mColors.put('9', Ansi.ansi().fg(Ansi.Color.BLUE).bold().toString());
         mColors.put('a', Ansi.ansi().fg(Ansi.Color.GREEN).bold().toString());
