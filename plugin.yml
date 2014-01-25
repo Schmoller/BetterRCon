@@ -44,6 +44,9 @@ permission:
   rcon.manage.password:
     description: Allows you to change the rcons password
     default: op
+  rcon.manage.who:
+    description: Allows you to see who is connected
+    default: op
 
 commands:
   rcon:

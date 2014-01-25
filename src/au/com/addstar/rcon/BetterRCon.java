@@ -22,6 +22,7 @@ import au.com.addstar.rcon.commands.AccountCommand;
 import au.com.addstar.rcon.commands.GroupCommand;
 import au.com.addstar.rcon.commands.PasswordCommand;
 import au.com.addstar.rcon.commands.RootCommandDispatcher;
+import au.com.addstar.rcon.commands.WhoCommand;
 import au.com.addstar.rcon.compat.CommandHelperCompat;
 import au.com.addstar.rcon.packets.RConPacket;
 
@@ -153,6 +154,7 @@ public class BetterRCon extends JavaPlugin
 		dispatch.registerCommand(new PasswordCommand());
 		dispatch.registerCommand(new AccountCommand());
 		dispatch.registerCommand(new GroupCommand());
+		dispatch.registerCommand(new WhoCommand());
 		
 		dispatch.registerAs(getCommand("rcon"));
 	}
