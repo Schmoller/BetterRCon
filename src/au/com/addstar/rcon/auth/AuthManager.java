@@ -172,7 +172,9 @@ public class AuthManager
 		if(!isValidName(name))
 			throw new IllegalArgumentException("Username contains invalid characters");
 		
-		return new User(mConfig.createSection(name), this);
+		User user = new User(mConfig.createSection(name), this);
+		mUsers.put(name, user);
+		return user;
 	}
 	
 	public void removeUser( String name ) throws IllegalArgumentException
@@ -192,7 +194,9 @@ public class AuthManager
 		if(!isValidName(name))
 			throw new IllegalArgumentException("Group name contains invalid characters");
 		
-		return new Group(mConfig.createSection(name), this);
+		Group group = new Group(mConfig.createSection(name), this);
+		mGroups.put(name, group);
+		return group;
 	}
 	
 	public void removeGroup( String name ) throws IllegalArgumentException

@@ -81,6 +81,7 @@ public class AddCommand implements ICommand
 			user.setOp(op);
 			user.setPassword(StoredPassword.generate(password));
 			
+			sender.sendMessage(ChatColor.GREEN + "Account " + user.getName() + " was successfully created.");
 			manager.write();
 		}
 		catch(IllegalArgumentException e)

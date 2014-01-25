@@ -57,7 +57,7 @@ public class Connection extends Thread
 			context.init(keyFactory.getKeyManagers(), factory.getTrustManagers(), null);
 			
 			mSocket = context.getSocketFactory().createSocket();
-			mSocket.connect(new InetSocketAddress(host, port), 2000);
+			mSocket.connect(new InetSocketAddress(host, port), 10000);
 			
 			start();
 		}
@@ -117,7 +117,7 @@ public class Connection extends Thread
 			
 			Future<PacketLogin> result = waitForPacket(PacketLogin.class);
 			
-			PacketLogin packet = result.get(2000, TimeUnit.MILLISECONDS);
+			PacketLogin packet = result.get(10000, TimeUnit.MILLISECONDS);
 			
 			if(packet.username.equals(username))
 			{

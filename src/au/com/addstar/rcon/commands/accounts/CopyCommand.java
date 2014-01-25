@@ -91,6 +91,7 @@ public class CopyCommand implements ICommand
 					user.addPerm(perm, false);
 			}
 			
+			sender.sendMessage(ChatColor.GREEN + "Account " + user.getName() + " was successfully created.");
 			manager.write();
 		}
 		catch(IllegalArgumentException e)
